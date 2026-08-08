@@ -8,6 +8,7 @@ import { FileTree, type FileTreeEntry } from './file-tree';
 import { DependenciesPanel } from './dependencies-panel';
 import { CodeViewer } from '@/components/viewer/code-viewer';
 import { SearchPanel } from '@/components/search/search-panel';
+import { AskPanel } from '@/components/search/ask-panel';
 import { Spinner } from '@/components/ui/spinner';
 import type { RepositoryRow } from '@/types/db';
 
@@ -69,17 +70,18 @@ export function RepoWorkspace({ repo, initialFiles }: RepoWorkspaceProps) {
     router.push(`?${params.toString()}`, { scroll: false });
   }
 
-  const [activeTab, setActiveTab] = React.useState<'browse' | 'search'>('browse');
+  const [activeTab, setActiveTab] = React.useState<'browse' | 'search' | 'ask'>('browse');
 
   return (
     <Tabs
       value={activeTab}
-      onValueChange={(v) => setActiveTab(v as 'browse' | 'search')}
+      onValueChange={(v) => setActiveTab(v as 'browse' | 'search' | 'ask')}
       className="flex h-[calc(100vh-8.5rem)] flex-col gap-3"
     >
       <TabsList className="w-fit">
         <TabsTrigger value="browse">Browse</TabsTrigger>
         <TabsTrigger value="search">Search this repository</TabsTrigger>
+        <TabsTrigger value="ask">Ask</TabsTrigger>
       </TabsList>
 
       <TabsContent value="browse" className="flex flex-1 gap-3 overflow-hidden">
@@ -117,6 +119,10 @@ export function RepoWorkspace({ repo, initialFiles }: RepoWorkspaceProps) {
           repoName={repo.name}
           onResultOpen={() => setActiveTab('browse')}
         />
+      </TabsContent>
+
+      <TabsContent value="ask" className="flex-1 overflow-auto">
+        <AskPanel repoId={repo.id} />
       </TabsContent>
     </Tabs>
   );

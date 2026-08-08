@@ -16,6 +16,10 @@ const eslintConfig = defineConfig([
     'test-results/**',
     '.omnisearch/**',
     '.omnisearch-e2e/**',
+    // packages/* are separate workspace members with their own lint/build
+    // tooling (see packages/sdk) — the root app's eslint config doesn't
+    // apply to them.
+    'packages/**',
     // Plain CommonJS Node worker script loaded by filesystem path at
     // runtime (see src/lib/search/regexSearch.ts) — not part of the
     // TS/ESM app graph, so TypeScript-aware rules like no-require-imports

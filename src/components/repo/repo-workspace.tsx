@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileTree, type FileTreeEntry } from './file-tree';
+import { DependenciesPanel } from './dependencies-panel';
 import { CodeViewer } from '@/components/viewer/code-viewer';
 import { SearchPanel } from '@/components/search/search-panel';
 import { Spinner } from '@/components/ui/spinner';
@@ -85,7 +86,7 @@ export function RepoWorkspace({ repo, initialFiles }: RepoWorkspaceProps) {
         <div className="border-line w-64 shrink-0 overflow-hidden rounded-md border">
           <FileTree files={initialFiles} selectedPath={selectedPath} onSelect={selectFile} />
         </div>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col gap-2 overflow-hidden">
           {!selectedPath ? (
             <div className="border-line-strong text-ink-faint flex h-full flex-col items-center justify-center gap-2 rounded-md border border-dashed">
               <FileText className="size-6" />
@@ -96,11 +97,16 @@ export function RepoWorkspace({ repo, initialFiles }: RepoWorkspaceProps) {
               <Spinner />
             </div>
           ) : (
-            <CodeViewer
-              filePath={fileState.path}
-              content={fileState.content}
-              language={fileState.language}
-            />
+            <>
+              <DependenciesPanel repoId={repo.id} filePath={fileState.path} />
+              <div className="min-h-0 flex-1">
+                <CodeViewer
+                  filePath={fileState.path}
+                  content={fileState.content}
+                  language={fileState.language}
+                />
+              </div>
+            </>
           )}
         </div>
       </TabsContent>

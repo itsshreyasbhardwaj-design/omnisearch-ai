@@ -56,6 +56,9 @@ export function ResultRow({ result, showRepo, focused, onOpen }: ResultRowProps)
       <pre className="bg-void/40 font-mono-ui text-ink-muted [&_mark]:bg-match [&_mark]:text-match-ink overflow-x-auto rounded-sm px-2 py-1.5 text-xs whitespace-pre [&_mark]:rounded-xs [&_mark]:px-0.5 [&_mark]:font-semibold">
         <code dangerouslySetInnerHTML={{ __html: result.snippetHtml }} />
       </pre>
+      {result.explanation && (
+        <p className="text-ink-faint text-[11px] italic">{result.explanation}</p>
+      )}
     </button>
   );
 }

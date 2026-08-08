@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { ResultRow } from './result-row';
-import type { SearchResponse, SearchResult } from '@/lib/search/types';
+import type { SearchMode, SearchResponse, SearchResult } from '@/lib/search/types';
 import type { RepositoryRow } from '@/types/db';
 
 interface SearchPanelProps {
@@ -25,11 +25,22 @@ interface SearchPanelProps {
   onResultOpen?: () => void;
 }
 
+const MODE_PLACEHOLDER: Record<SearchMode, string> = {
+  text: 'Search across your repositories…',
+  regex: 'Regular expression, e.g. TODO|FIXME',
+  symbol: 'Symbol name, e.g. authenticateUser',
+  semantic: 'Describe what you’re looking for…',
+  hybrid: 'Search across your repositories…',
+};
+
+const SYMBOL_KINDS = ['function', 'method', 'class', 'interface', 'type', 'variable', 'component'];
+
 export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: SearchPanelProps) {
   const router = useRouter();
   const [query, setQuery] = React.useState(initialQuery ?? '');
-  const [mode, setMode] = React.useState<'text' | 'regex'>('text');
+  const [mode, setMode] = React.useState<SearchMode>('text');
   const [regexFlags, setRegexFlags] = React.useState('i');
+  const [symbolKind, setSymbolKind] = React.useState<string>('all');
   const [language, setLanguage] = React.useState('');
   const [directory, setDirectory] = React.useState('');
   const [fileExtension, setFileExtension] = React.useState('');
@@ -74,6 +85,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
               language: language || undefined,
               directory: directory || undefined,
               fileExtension: fileExtension || undefined,
+              symbolKind: mode === 'symbol' && symbolKind !== 'all' ? symbolKind : undefined,
             },
           }),
         });
@@ -90,7 +102,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
         setLoading(false);
       }
     },
-    [query, mode, regexFlags, repoId, repoFilterId, language, directory, fileExtension],
+    [query, mode, regexFlags, symbolKind, repoId, repoFilterId, language, directory, fileExtension],
   );
 
   React.useEffect(() => {
@@ -135,10 +147,13 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
     <div className="flex flex-col gap-4">
       <form onSubmit={runSearch} className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as 'text' | 'regex')}>
+          <Tabs value={mode} onValueChange={(v) => setMode(v as SearchMode)}>
             <TabsList>
               <TabsTrigger value="text">Text</TabsTrigger>
               <TabsTrigger value="regex">Regex</TabsTrigger>
+              <TabsTrigger value="symbol">Symbol</TabsTrigger>
+              <TabsTrigger value="semantic">Semantic</TabsTrigger>
+              <TabsTrigger value="hybrid">Hybrid</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -149,11 +164,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={
-                repoId
-                  ? `Search ${repoName ?? 'this repository'}…`
-                  : mode === 'regex'
-                    ? 'Regular expression, e.g. TODO|FIXME'
-                    : 'Search across your repositories…'
+                repoId ? `Search ${repoName ?? 'this repository'}…` : MODE_PLACEHOLDER[mode]
               }
               className="h-9 pl-9"
             />
@@ -174,6 +185,14 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
           </Button>
         </div>
 
+        {(mode === 'semantic' || mode === 'hybrid') && (
+          <p className="text-ink-faint text-xs">
+            {mode === 'semantic'
+              ? 'Local embeddings (lexical/conceptual overlap) — not a neural model.'
+              : 'Combines text, semantic, and symbol relevance into one ranking.'}
+          </p>
+        )}
+
         <div className="flex flex-wrap items-center gap-2">
           {!repoId && (
             <Select value={repoFilterId} onValueChange={setRepoFilterId}>
@@ -185,6 +204,21 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
                 {availableRepos.map((repo) => (
                   <SelectItem key={repo.id} value={repo.id}>
                     {repo.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {mode === 'symbol' && (
+            <Select value={symbolKind} onValueChange={setSymbolKind}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All kinds" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All kinds</SelectItem>
+                {SYMBOL_KINDS.map((kind) => (
+                  <SelectItem key={kind} value={kind}>
+                    {kind}
                   </SelectItem>
                 ))}
               </SelectContent>

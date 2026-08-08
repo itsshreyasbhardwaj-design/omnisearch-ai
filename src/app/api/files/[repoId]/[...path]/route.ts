@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guard';
 import { getOwnedRepository, resolveRepoRoot } from '@/lib/repos/repoService';
+import { recordFileAccess } from '@/lib/analytics/fileAccess';
 import { apiError, toApiError } from '@/lib/api/errors';
 
 interface RouteContext {
@@ -37,6 +38,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
     }
 
     const content = await fs.readFile(resolved, 'utf8');
+    recordFileAccess(user.id, repoId, relPath);
     return NextResponse.json({
       path: relPath,
       content,

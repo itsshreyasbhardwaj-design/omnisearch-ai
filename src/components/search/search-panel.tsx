@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Search, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, FolderGit2, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { ResultRow } from './result-row';
 import type { SearchMode, SearchResponse, SearchResult } from '@/lib/search/types';
@@ -44,7 +50,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
   const [language, setLanguage] = React.useState('');
   const [directory, setDirectory] = React.useState('');
   const [fileExtension, setFileExtension] = React.useState('');
-  const [repoFilterId, setRepoFilterId] = React.useState<string>('all');
+  const [selectedRepoIds, setSelectedRepoIds] = React.useState<string[]>([]);
   const [availableRepos, setAvailableRepos] = React.useState<RepositoryRow[]>([]);
 
   const [response, setResponse] = React.useState<SearchResponse | null>(null);
@@ -80,7 +86,8 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
             query,
             mode,
             regexFlags: mode === 'regex' ? regexFlags : undefined,
-            repoId: repoId ?? (repoFilterId !== 'all' ? repoFilterId : undefined),
+            repoId,
+            repoIds: !repoId && selectedRepoIds.length > 0 ? selectedRepoIds : undefined,
             filters: {
               language: language || undefined,
               directory: directory || undefined,
@@ -102,7 +109,17 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
         setLoading(false);
       }
     },
-    [query, mode, regexFlags, symbolKind, repoId, repoFilterId, language, directory, fileExtension],
+    [
+      query,
+      mode,
+      regexFlags,
+      symbolKind,
+      repoId,
+      selectedRepoIds,
+      language,
+      directory,
+      fileExtension,
+    ],
   );
 
   React.useEffect(() => {
@@ -195,19 +212,37 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
 
         <div className="flex flex-wrap items-center gap-2">
           {!repoId && (
-            <Select value={repoFilterId} onValueChange={setRepoFilterId}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="All repositories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All repositories</SelectItem>
-                {availableRepos.map((repo) => (
-                  <SelectItem key={repo.id} value={repo.id}>
-                    {repo.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-normal">
+                  <FolderGit2 className="size-3.5" />
+                  {selectedRepoIds.length === 0
+                    ? 'All repositories'
+                    : `${selectedRepoIds.length} repositor${selectedRepoIds.length === 1 ? 'y' : 'ies'}`}
+                  <ChevronDown className="size-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-72 w-56 overflow-y-auto">
+                {availableRepos.length === 0 ? (
+                  <p className="text-ink-faint px-2 py-1.5 text-xs">No repositories yet</p>
+                ) : (
+                  availableRepos.map((repo) => (
+                    <DropdownMenuCheckboxItem
+                      key={repo.id}
+                      checked={selectedRepoIds.includes(repo.id)}
+                      onCheckedChange={(checked) =>
+                        setSelectedRepoIds((prev) =>
+                          checked ? [...prev, repo.id] : prev.filter((id) => id !== repo.id),
+                        )
+                      }
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      {repo.name}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {mode === 'symbol' && (
             <Select value={symbolKind} onValueChange={setSymbolKind}>

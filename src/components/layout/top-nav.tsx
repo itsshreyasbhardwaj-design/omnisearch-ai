@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Moon, Search, Sun, LayoutGrid } from 'lucide-react';
+import { BarChart3, LogOut, Moon, Search, Sun, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import {
@@ -50,6 +50,16 @@ export function TopNav({ userEmail }: { userEmail: string }) {
             <Link href="/search">
               <Search className="size-3.5" />
               Search
+            </Link>
+          </Button>
+          <Button
+            variant={pathname?.startsWith('/analytics') ? 'subtle' : 'ghost'}
+            size="sm"
+            asChild
+          >
+            <Link href="/analytics">
+              <BarChart3 className="size-3.5" />
+              Analytics
             </Link>
           </Button>
         </nav>

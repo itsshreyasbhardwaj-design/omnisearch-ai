@@ -1,0 +1,76 @@
+[
+  {
+    "id": "text-authenticateUser",
+    "query": "authenticateUser",
+    "mode": "text",
+    "expectedFile": "src/auth/authService.ts"
+  },
+  {
+    "id": "text-slugify",
+    "query": "slugify",
+    "mode": "text",
+    "expectedFile": "src/utils/stringHelpers.js"
+  },
+  {
+    "id": "text-emailPattern",
+    "query": "EMAIL_PATTERN",
+    "mode": "text",
+    "expectedFile": "src/auth/password.ts"
+  },
+  {
+    "id": "text-hashPassword",
+    "query": "hash_password",
+    "mode": "text",
+    "expectedFile": "scripts/seed.py"
+  },
+  {
+    "id": "regex-todo-fixme",
+    "query": "TODO|FIXME",
+    "mode": "regex",
+    "regexFlags": "i",
+    "expectedFile": "src/auth/authService.ts"
+  },
+  {
+    "id": "regex-go-func",
+    "query": "^func\\s+\\w+",
+    "mode": "regex",
+    "regexFlags": "",
+    "expectedFile": "pkg/health/health.go"
+  },
+  {
+    "id": "symbol-handleHealthCheck",
+    "query": "HandleHealthCheck",
+    "mode": "symbol",
+    "expectedFile": "pkg/health/health.go"
+  },
+  {
+    "id": "symbol-verifyPassword",
+    "query": "verifyPassword",
+    "mode": "symbol",
+    "expectedFile": "src/auth/password.ts"
+  },
+  {
+    "id": "symbol-registerRoutes",
+    "query": "RegisterRoutes",
+    "mode": "symbol",
+    "expectedFile": "pkg/health/health.go"
+  },
+  {
+    "id": "semantic-verify-credentials",
+    "query": "verify a user's password and email address",
+    "mode": "semantic",
+    "expectedFile": "src/auth/password.ts"
+  },
+  {
+    "id": "hybrid-authenticateUser",
+    "query": "authenticateUser",
+    "mode": "hybrid",
+    "expectedFile": "src/auth/authService.ts"
+  },
+  {
+    "id": "hybrid-order-creation",
+    "query": "create an order for a user",
+    "mode": "hybrid",
+    "expectedFile": "src/api/orders.ts"
+  }
+]

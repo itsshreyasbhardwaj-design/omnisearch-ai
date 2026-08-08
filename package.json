@@ -40,6 +40,7 @@
     "test:e2e": "playwright test",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "mcp": "tsx scripts/mcp-server.ts",
+    "bench": "tsx scripts/bench.ts",
     "build:sdk": "pnpm --filter @omnisearch/sdk build",
     "typecheck:sdk": "pnpm --filter @omnisearch/sdk typecheck",
     "test:sdk": "pnpm --filter @omnisearch/sdk test",

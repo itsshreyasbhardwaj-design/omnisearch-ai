@@ -1,0 +1,160 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * OmniSearch design system — "index card on graphite".
+ *
+ * A search tool should read like a precision instrument: a dark, quiet
+ * ground so code and results carry the contrast, hairline dividers instead
+ * of heavy chrome, and exactly one warm accent — the highlighter amber used
+ * for match spans — so the eye finds "why this result" immediately. The
+ * interactive accent (beam blue) is reserved for actions and focus, never
+ * for decoration.
+ */
+
+@theme {
+  /* -- ground -------------------------------------------------------- */
+  --color-void: #0a0a0f;
+  --color-pit: #0d0d13;
+  --color-surface: #111118;
+  --color-raised: #17171f;
+  --color-hover: #1e1e29;
+  --color-line: #242430;
+  --color-line-strong: #34343f;
+
+  /* -- ink ----------------------------------------------------------- */
+  --color-ink: #edeef2;
+  --color-ink-muted: #9d9dae;
+  --color-ink-faint: #68687a;
+  --color-ink-ghost: #43434f;
+
+  /* -- accents --------------------------------------------------------
+   * beam = interactive / brand. match = search-highlight amber. the rest
+   * are semantic status colors used sparingly (badges, index state). */
+  --color-beam: #4c9eff;
+  --color-beam-soft: #8ec2ff;
+  --color-beam-deep: #2f6fc9;
+  --color-match: #ffcc66;
+  --color-match-ink: #241a04;
+  --color-ready: #2ed8a7;
+  --color-warn: #ffb454;
+  --color-danger: #ff5c72;
+
+  /* -- typography ------------------------------------------------------ */
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* -- geometry -------------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 11px;
+  --radius-xl: 16px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --background: var(--color-void);
+  --foreground: var(--color-ink);
+  --border: var(--color-line);
+  --ring: var(--color-beam);
+
+  --grid-dot: rgba(255, 255, 255, 0.04);
+  --grid-size: 24px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-void: #f6f6f8;
+  --color-pit: #ffffff;
+  --color-surface: #ffffff;
+  --color-raised: #f0f0f4;
+  --color-hover: #e7e7ee;
+  --color-line: #e1e1e8;
+  --color-line-strong: #cccdd8;
+  --color-ink: #17171f;
+  --color-ink-muted: #52525f;
+  --color-ink-faint: #83838f;
+  --color-ink-ghost: #adadb8;
+  --color-match: #ffdd88;
+  --color-match-ink: #241a04;
+  --background: var(--color-void);
+  --foreground: var(--color-ink);
+  --border: var(--color-line);
+  --grid-dot: rgba(0, 0, 0, 0.035);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --color-void: #f6f6f8;
+    --color-pit: #ffffff;
+    --color-surface: #ffffff;
+    --color-raised: #f0f0f4;
+    --color-hover: #e7e7ee;
+    --color-line: #e1e1e8;
+    --color-line-strong: #cccdd8;
+    --color-ink: #17171f;
+    --color-ink-muted: #52525f;
+    --color-ink-faint: #83838f;
+    --color-ink-ghost: #adadb8;
+    --color-match: #ffdd88;
+    --color-match-ink: #241a04;
+    --background: var(--color-void);
+    --foreground: var(--color-ink);
+    --border: var(--color-line);
+    --grid-dot: rgba(0, 0, 0, 0.035);
+  }
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+code,
+pre,
+kbd,
+.font-mono-ui {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-beam) 35%, transparent);
+}
+
+mark,
+.search-match {
+  background: var(--color-match);
+  color: var(--color-match-ink);
+  border-radius: 2px;
+  padding: 0 1px;
+  font-weight: 600;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--color-void);
+}

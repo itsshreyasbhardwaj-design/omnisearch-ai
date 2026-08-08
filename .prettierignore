@@ -1,0 +1,9 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+.omnisearch
+.omnisearch-e2e
+pnpm-lock.yaml
+tests/fixtures/demo-repo

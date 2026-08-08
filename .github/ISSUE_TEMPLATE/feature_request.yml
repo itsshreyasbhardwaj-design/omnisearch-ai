@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose something OmniSearch doesn't do yet.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that OmniSearch doesn't support?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Search modes (symbol, semantic, hybrid, AI questions)
+        - Search filters / UX
+        - Repository sources
+        - Code viewer
+        - Cross-repository search
+        - API / SDK / MCP
+        - Other
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

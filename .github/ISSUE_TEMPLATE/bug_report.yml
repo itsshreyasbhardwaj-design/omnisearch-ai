@@ -1,0 +1,76 @@
+name: Bug report
+description: Something does not work, or a search result looks wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. If this is about search results being wrong or
+        missing, naming a public repository to reproduce against is the
+        single most useful thing you can add.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Text search
+        - Regex search
+        - Repository ingestion — GitHub, local path, or ZIP
+        - Indexing — files missing, wrong language, incremental re-index
+        - Code viewer
+        - Authentication / accounts
+        - API
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: repository
+    attributes:
+      label: Repository to reproduce with
+      description: A public repository this happens on, if applicable.
+      placeholder: owner/repo
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add owner/repo as a repository
+        2. Search for "..."
+        3. ...
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0, or the commit SHA
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where
+      options:
+        - Local development (pnpm dev)
+        - Self-hosted production build (pnpm build && pnpm start)
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Console errors, screenshots — all welcome.

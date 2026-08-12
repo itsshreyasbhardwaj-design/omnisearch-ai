@@ -46,3 +46,10 @@ next-env.d.ts
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Security hardening: secret-shaped files, none currently present
+!.env.example
+*.key
+credentials*.json
+service-account*.json
+*.log

@@ -63,6 +63,7 @@ export function RepoCard({ repo }: { repo: RepositoryRow }) {
                 size="icon-sm"
                 disabled={busy}
                 onClick={(e) => e.preventDefault()}
+                aria-label={`More actions for ${repo.name}`}
               >
                 <MoreHorizontal className="size-3.5" />
               </Button>

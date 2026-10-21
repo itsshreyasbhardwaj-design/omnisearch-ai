@@ -6,7 +6,7 @@ import type { SearchProvider, SearchResult } from './types';
 const TEXT_WEIGHT = 0.5;
 const SEMANTIC_WEIGHT = 0.3;
 const SYMBOL_WEIGHT = 0.2;
-const RESULT_CAP = 50;
+const PAGE_SIZE = 30;
 
 function resultKey(r: Pick<SearchResult, 'repoId' | 'filePath' | 'startLine'>): string {
   return `${r.repoId}:${r.filePath}:${r.startLine}`;
@@ -16,9 +16,14 @@ function resultKey(r: Pick<SearchResult, 'repoId' | 'filePath' | 'startLine'>): 
  * Combines lexical (BM25), local-semantic (cosine similarity), and symbol
  * name relevance into one ranked list — a real weighted merge over the
  * other three providers' own (already-normalized 0-100) scores, not a stub.
+ *
+ * Sub-providers are always called at their own first page: the candidate
+ * pool this merges over is fixed regardless of which hybrid page is being
+ * requested, so paginating hybrid results means slicing that one ranked
+ * list rather than re-deriving a shifting merge per page.
  */
 export const hybridProvider: SearchProvider = {
-  async search(query, repos, filters) {
+  async search(query, repos, filters, cursor = 0) {
     const [textOutcome, semanticOutcome, symbolOutcome] = await Promise.all([
       sqliteFtsProvider.search(query, repos, filters),
       semanticProvider.search(query, repos, filters),
@@ -49,10 +54,10 @@ export const hybridProvider: SearchProvider = {
     fold(symbolOutcome.results, SYMBOL_WEIGHT, 'symbol');
 
     const ranked = Array.from(merged.values()).sort((a, b) => b.weightedScore - a.weightedScore);
-    const truncated = ranked.length > RESULT_CAP;
-    const top = ranked.slice(0, RESULT_CAP);
+    const hasNextPage = cursor + PAGE_SIZE < ranked.length;
+    const page = ranked.slice(cursor, cursor + PAGE_SIZE);
 
-    const results: SearchResult[] = top.map(({ result, weightedScore, signals }) => ({
+    const results: SearchResult[] = page.map(({ result, weightedScore, signals }) => ({
       ...result,
       matchType: 'HYBRID MATCH',
       score: Math.round(Math.min(100, weightedScore)),
@@ -61,8 +66,8 @@ export const hybridProvider: SearchProvider = {
 
     return {
       results,
-      truncated:
-        truncated || textOutcome.truncated || semanticOutcome.truncated || symbolOutcome.truncated,
+      truncated: textOutcome.truncated || semanticOutcome.truncated || symbolOutcome.truncated,
+      nextCursor: hasNextPage ? cursor + PAGE_SIZE : null,
     };
   },
 };

@@ -4,7 +4,7 @@ import { findMatchingLine } from './lineMatch';
 import { markersToHtml } from './highlight';
 import type { SearchProvider, SearchResult } from './types';
 
-const RESULT_CAP = 100;
+const PAGE_SIZE = 30;
 // Control characters, not visible symbols, so they can't collide with real
 // source text — used only to find the matched span in SQLite's snippet()
 // output before it's escaped and re-wrapped in <mark> by markersToHtml.
@@ -34,10 +34,10 @@ interface ChunkRow {
 }
 
 export const sqliteFtsProvider: SearchProvider = {
-  async search(query, repos, filters) {
+  async search(query, repos, filters, cursor = 0) {
     const { matchQuery, tokens } = buildFtsQuery(query);
     if (!matchQuery || repos.length === 0) {
-      return { results: [], truncated: false };
+      return { results: [], truncated: false, nextCursor: null };
     }
 
     const repoById = new Map(repos.map((r) => [r.id, r]));
@@ -62,6 +62,7 @@ export const sqliteFtsProvider: SearchProvider = {
       params.push(`%.${escapeLike(filters.fileExtension.replace(/^\./, ''))}`);
     }
 
+    // Fetches one extra row past the page so we can tell whether a next page exists.
     const sql = `
       SELECT
         path, repo_id, start_line, end_line, language, content,
@@ -70,17 +71,17 @@ export const sqliteFtsProvider: SearchProvider = {
       FROM chunks_fts
       WHERE ${conditions.join(' AND ')}
       ORDER BY score ASC
-      LIMIT ?
+      LIMIT ? OFFSET ?
     `;
-    params.push(RESULT_CAP + 1);
+    params.push(PAGE_SIZE + 1, cursor);
 
     const rows = db.prepare(sql).all(...params) as ChunkRow[];
-    const truncated = rows.length > RESULT_CAP;
-    const capped = truncated ? rows.slice(0, RESULT_CAP) : rows;
+    const hasNextPage = rows.length > PAGE_SIZE;
+    const page = hasNextPage ? rows.slice(0, PAGE_SIZE) : rows;
 
-    const relevance = toRelevancePercent(capped.map((r) => normalizeBm25(r.score)));
+    const relevance = toRelevancePercent(page.map((r) => normalizeBm25(r.score)));
 
-    const results: SearchResult[] = capped.map((row, index) => {
+    const results: SearchResult[] = page.map((row, index) => {
       const repo = repoById.get(row.repo_id);
       const matchedLine = findMatchingLine(row.content, tokens, row.start_line);
       return {
@@ -97,6 +98,10 @@ export const sqliteFtsProvider: SearchProvider = {
       };
     });
 
-    return { results, truncated };
+    return {
+      results,
+      truncated: false,
+      nextCursor: hasNextPage ? cursor + PAGE_SIZE : null,
+    };
   },
 };

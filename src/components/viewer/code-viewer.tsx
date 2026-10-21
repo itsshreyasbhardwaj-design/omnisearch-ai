@@ -146,10 +146,11 @@ export function CodeViewer({ filePath, content, language }: CodeViewerProps) {
               setFindIndex(0);
             }}
             placeholder="Find in file"
+            aria-label="Find in file"
             className="h-7 w-40 text-xs"
           />
           {findQuery && (
-            <span className="text-ink-faint text-[11px] whitespace-nowrap">
+            <span className="text-ink-faint text-[11px] whitespace-nowrap" aria-live="polite">
               {matchingLines.length > 0 ? `${findIndex + 1}/${matchingLines.length}` : '0/0'}
             </span>
           )}
@@ -158,6 +159,7 @@ export function CodeViewer({ filePath, content, language }: CodeViewerProps) {
             size="icon-sm"
             onClick={() => jumpToFind(-1)}
             disabled={matchingLines.length === 0}
+            aria-label="Previous match"
           >
             <ChevronUp className="size-3.5" />
           </Button>
@@ -166,6 +168,7 @@ export function CodeViewer({ filePath, content, language }: CodeViewerProps) {
             size="icon-sm"
             onClick={() => jumpToFind(1)}
             disabled={matchingLines.length === 0}
+            aria-label="Next match"
           >
             <ChevronDown className="size-3.5" />
           </Button>

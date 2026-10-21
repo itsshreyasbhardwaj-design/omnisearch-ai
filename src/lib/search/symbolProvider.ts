@@ -3,7 +3,7 @@ import { escapeHtml, highlightSpan } from './highlight';
 import type { SearchProvider, SearchResult } from './types';
 import type { SymbolRow } from '@/types/db';
 
-const RESULT_CAP = 100;
+const PAGE_SIZE = 30;
 
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (char) => `\\${char}`);
@@ -14,10 +14,10 @@ function kindLabel(kind: string): string {
 }
 
 export const symbolProvider: SearchProvider = {
-  async search(query, repos, filters) {
+  async search(query, repos, filters, cursor = 0) {
     const trimmed = query.trim();
     if (!trimmed || repos.length === 0) {
-      return { results: [], truncated: false };
+      return { results: [], truncated: false, nextCursor: null };
     }
 
     const repoById = new Map(repos.map((r) => [r.id, r]));
@@ -50,16 +50,16 @@ export const symbolProvider: SearchProvider = {
       SELECT * FROM symbols
       WHERE ${conditions.join(' AND ')}
       ORDER BY (name = ?) DESC, exported DESC, length(name) ASC
-      LIMIT ?
+      LIMIT ? OFFSET ?
     `;
-    params.push(trimmed, RESULT_CAP + 1);
+    params.push(trimmed, PAGE_SIZE + 1, cursor);
 
     const rows = db.prepare(sql).all(...params) as SymbolRow[];
-    const truncated = rows.length > RESULT_CAP;
-    const capped = truncated ? rows.slice(0, RESULT_CAP) : rows;
+    const hasNextPage = rows.length > PAGE_SIZE;
+    const page = hasNextPage ? rows.slice(0, PAGE_SIZE) : rows;
     const lowerQuery = trimmed.toLowerCase();
 
-    const results: SearchResult[] = capped.map((row) => {
+    const results: SearchResult[] = page.map((row) => {
       const repo = repoById.get(row.repo_id);
       const nameIndex = row.name.toLowerCase().indexOf(lowerQuery);
       const nameHtml =
@@ -82,6 +82,6 @@ export const symbolProvider: SearchProvider = {
       };
     });
 
-    return { results, truncated };
+    return { results, truncated: false, nextCursor: hasNextPage ? cursor + PAGE_SIZE : null };
   },
 };

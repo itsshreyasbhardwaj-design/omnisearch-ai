@@ -33,6 +33,8 @@ export interface SearchResponse {
   truncated: boolean;
   timedOut?: boolean;
   tookMs: number;
+  /** Pass back as `cursor` to fetch the next page; null/absent means there isn't one. */
+  nextCursor?: number | null;
 }
 
 /**
@@ -45,5 +47,6 @@ export interface SearchProvider {
     query: string,
     repos: { id: string; name: string; rootDir: string }[],
     filters: SearchFilters,
+    cursor?: number,
   ): Promise<Omit<SearchResponse, 'query' | 'mode' | 'tookMs'>>;
 }

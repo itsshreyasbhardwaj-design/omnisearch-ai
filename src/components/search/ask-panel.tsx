@@ -71,6 +71,7 @@ export function AskPanel({ repoId }: { repoId?: string }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Where is authentication implemented? How does a user sign up? What calls authenticateUser?"
+          aria-label="Ask a question about this repository"
           rows={3}
         />
         <div className="flex items-center justify-between">

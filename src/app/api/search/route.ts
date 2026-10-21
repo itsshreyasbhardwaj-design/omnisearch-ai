@@ -68,6 +68,7 @@ export async function POST(request: Request) {
           input.regexFlags,
           searchableRepos,
           input.filters,
+          input.cursor,
         );
         const tookMs = Date.now() - startedAt;
         recordSearch(user.id, scopedRepoId, input.query, 'regex', outcome.results.length, tookMs);
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
           truncated: outcome.truncated,
           timedOut: outcome.timedOut,
           tookMs,
+          nextCursor: outcome.nextCursor,
         };
         return NextResponse.json(response);
       } catch (error) {
@@ -89,7 +91,12 @@ export async function POST(request: Request) {
     }
 
     const provider = PROVIDERS[input.mode];
-    const outcome = await provider.search(input.query, searchableRepos, input.filters);
+    const outcome = await provider.search(
+      input.query,
+      searchableRepos,
+      input.filters,
+      input.cursor,
+    );
     const tookMs = Date.now() - startedAt;
     recordSearch(user.id, scopedRepoId, input.query, input.mode, outcome.results.length, tookMs);
     const response: SearchResponse = {
@@ -98,6 +105,7 @@ export async function POST(request: Request) {
       results: outcome.results,
       truncated: outcome.truncated,
       tookMs,
+      nextCursor: outcome.nextCursor,
     };
     return NextResponse.json(response);
   } catch (error) {

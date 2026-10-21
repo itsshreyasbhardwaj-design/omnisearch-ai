@@ -9,7 +9,8 @@ const WORKER_PATH = path.join(process.cwd(), 'src/lib/search/regexWorker.cjs');
 const TIMEOUT_MS = 5_000;
 const MAX_MATCHES_PER_REPO = 100;
 const MAX_FILES_SCANNED_PER_REPO = 8_000;
-const RESULT_CAP = 100;
+const MAX_CANDIDATES = 100;
+const PAGE_SIZE = 30;
 
 export class InvalidRegexError extends Error {
   constructor(message: string) {
@@ -127,7 +128,13 @@ export async function searchRegex(
   flags: string,
   repos: { id: string; name: string; rootDir: string }[],
   filters: SearchFilters,
-): Promise<{ results: SearchResult[]; truncated: boolean; timedOut: boolean }> {
+  cursor = 0,
+): Promise<{
+  results: SearchResult[];
+  truncated: boolean;
+  timedOut: boolean;
+  nextCursor: number | null;
+}> {
   const syntaxError = validateRegexSyntax(pattern, flags);
   if (syntaxError) throw new InvalidRegexError(syntaxError);
   if (looksCatastrophic(pattern)) {
@@ -145,7 +152,7 @@ export async function searchRegex(
   );
 
   const timedOut = perRepo.some((r) => r.outcome.timedOut);
-  let truncated = perRepo.some((r) => r.outcome.truncated);
+  const workerTruncated = perRepo.some((r) => r.outcome.truncated);
 
   const merged: SearchResult[] = [];
   for (const { repo, outcome } of perRepo) {
@@ -165,9 +172,15 @@ export async function searchRegex(
     }
   }
 
-  if (merged.length > RESULT_CAP) {
-    truncated = true;
-  }
+  const candidates = merged.slice(0, MAX_CANDIDATES);
+  const hasNextPage = cursor + PAGE_SIZE < candidates.length;
+  const page = candidates.slice(cursor, cursor + PAGE_SIZE);
+  const truncated = workerTruncated || merged.length > MAX_CANDIDATES;
 
-  return { results: merged.slice(0, RESULT_CAP), truncated, timedOut };
+  return {
+    results: page,
+    truncated,
+    timedOut,
+    nextCursor: hasNextPage ? cursor + PAGE_SIZE : null,
+  };
 }

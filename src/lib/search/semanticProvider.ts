@@ -7,7 +7,8 @@ import { toRelevancePercent } from './ranking';
 import type { SearchProvider, SearchResult } from './types';
 import type { EmbeddingRow } from '@/types/db';
 
-const RESULT_CAP = 50;
+const MAX_CANDIDATES = 50;
+const PAGE_SIZE = 30;
 const MIN_SIMILARITY = 0.05;
 
 function escapeLike(value: string): string {
@@ -15,9 +16,9 @@ function escapeLike(value: string): string {
 }
 
 export const semanticProvider: SearchProvider = {
-  async search(query, repos, filters) {
+  async search(query, repos, filters, cursor = 0) {
     if (!query.trim() || repos.length === 0) {
-      return { results: [], truncated: false };
+      return { results: [], truncated: false, nextCursor: null };
     }
 
     const db = getDb();
@@ -41,7 +42,7 @@ export const semanticProvider: SearchProvider = {
       .prepare(`SELECT * FROM embeddings WHERE ${conditions.join(' AND ')}`)
       .all(...params) as EmbeddingRow[];
 
-    if (rows.length === 0) return { results: [], truncated: false };
+    if (rows.length === 0) return { results: [], truncated: false, nextCursor: null };
 
     const provider = getEmbeddingProvider();
     const queryEmbedding = await provider.embedQuery(query);
@@ -60,12 +61,16 @@ export const semanticProvider: SearchProvider = {
       .filter((s) => s.similarity >= MIN_SIMILARITY)
       .sort((a, b) => b.similarity - a.similarity);
 
-    const truncated = scored.length > RESULT_CAP;
-    const top = scored.slice(0, RESULT_CAP);
+    const candidates = scored.slice(0, MAX_CANDIDATES);
+    const hasNextPage = cursor + PAGE_SIZE < candidates.length;
+    const page = candidates.slice(cursor, cursor + PAGE_SIZE);
     const repoById = new Map(repos.map((r) => [r.id, r]));
-    const relevance = toRelevancePercent(top.map((s) => s.similarity));
+    // Relevance is scaled against the whole candidate set, not just this
+    // page, so a result's score doesn't shift depending on which page it's on.
+    const relevanceForCandidates = toRelevancePercent(candidates.map((s) => s.similarity));
 
-    const results: SearchResult[] = top.map((s, index) => {
+    const results: SearchResult[] = page.map((s, pageIndex) => {
+      const index = cursor + pageIndex;
       const content = (
         db
           .prepare(
@@ -84,7 +89,7 @@ export const semanticProvider: SearchProvider = {
         filePath: s.row.path,
         language: s.row.language,
         matchType: 'SEMANTIC MATCH',
-        score: relevance[index] ?? Math.round(s.similarity * 100),
+        score: relevanceForCandidates[index] ?? Math.round(s.similarity * 100),
         startLine: s.row.start_line,
         endLine: s.row.end_line,
         // No single "matched span" for a semantic result — the whole chunk is
@@ -95,6 +100,6 @@ export const semanticProvider: SearchProvider = {
       };
     });
 
-    return { results, truncated };
+    return { results, truncated: false, nextCursor: hasNextPage ? cursor + PAGE_SIZE : null };
   },
 };

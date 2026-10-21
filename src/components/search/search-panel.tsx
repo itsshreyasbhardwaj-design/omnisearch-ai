@@ -55,6 +55,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
 
   const [response, setResponse] = React.useState<SearchResponse | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = React.useState(-1);
 
@@ -71,11 +72,13 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
   }, [repoId]);
 
   const runSearch = React.useCallback(
-    async (event?: React.FormEvent) => {
+    async (event?: React.FormEvent, cursor?: number) => {
       event?.preventDefault();
       if (!query.trim()) return;
 
-      setLoading(true);
+      const isLoadMore = cursor !== undefined;
+      if (isLoadMore) setLoadingMore(true);
+      else setLoading(true);
       setError(null);
       setFocusedIndex(-1);
       try {
@@ -88,6 +91,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
             regexFlags: mode === 'regex' ? regexFlags : undefined,
             repoId,
             repoIds: !repoId && selectedRepoIds.length > 0 ? selectedRepoIds : undefined,
+            cursor,
             filters: {
               language: language || undefined,
               directory: directory || undefined,
@@ -99,14 +103,18 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
         const data = await res.json();
         if (!res.ok) {
           setError(data.error?.message ?? 'Search failed.');
-          setResponse(null);
+          if (!isLoadMore) setResponse(null);
           return;
         }
-        setResponse(data as SearchResponse);
+        const page = data as SearchResponse;
+        setResponse((prev) =>
+          isLoadMore && prev ? { ...page, results: [...prev.results, ...page.results] } : page,
+        );
       } catch {
         setError('Could not reach the server.');
       } finally {
-        setLoading(false);
+        if (isLoadMore) setLoadingMore(false);
+        else setLoading(false);
       }
     },
     [
@@ -121,6 +129,10 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
       fileExtension,
     ],
   );
+
+  function loadMore() {
+    if (response?.nextCursor != null) void runSearch(undefined, response.nextCursor);
+  }
 
   React.useEffect(() => {
     // Runs the deep-linked `?q=` search once on mount — a one-time action
@@ -246,7 +258,7 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
           )}
           {mode === 'symbol' && (
             <Select value={symbolKind} onValueChange={setSymbolKind}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" aria-label="Filter by symbol kind">
                 <SelectValue placeholder="All kinds" />
               </SelectTrigger>
               <SelectContent>
@@ -263,18 +275,21 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             placeholder="Language (e.g. typescript)"
+            aria-label="Filter by language"
             className="h-8 w-48 text-xs"
           />
           <Input
             value={directory}
             onChange={(e) => setDirectory(e.target.value)}
             placeholder="Directory (e.g. src/lib)"
+            aria-label="Filter by directory"
             className="h-8 w-48 text-xs"
           />
           <Input
             value={fileExtension}
             onChange={(e) => setFileExtension(e.target.value)}
             placeholder="Extension (e.g. tsx)"
+            aria-label="Filter by file extension"
             className="h-8 w-40 text-xs"
           />
           {hasFilters && (
@@ -337,6 +352,20 @@ export function SearchPanel({ repoId, repoName, initialQuery, onResultOpen }: Se
               />
             ))}
           </div>
+
+          {response.nextCursor != null && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-center"
+              disabled={loadingMore}
+              onClick={loadMore}
+            >
+              {loadingMore && <Spinner />}
+              Load more
+            </Button>
+          )}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 {
   "name": "omnisearch-ai",
   "version": "0.1.0",
-  "description": "AI-native search engine for software repositories — text, regex, symbol, semantic, and hybrid search in one place",
+  "description": "AI-native search engine for software repositories \u2014 text, regex, symbol, semantic, and hybrid search in one place",
   "private": true,
   "license": "MIT",
   "homepage": "https://github.com/itsshreyasbhardwaj-design/omnisearch-ai#readme",
@@ -67,7 +67,7 @@
     "jose": "^6.1.0",
     "lucide-react": "^1.26.0",
     "nanoid": "^6.0.0",
-    "next": "16.2.11",
+    "next": "^16.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "shiki": "^3.15.0",
